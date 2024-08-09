@@ -65,8 +65,18 @@ class Extractor(object):
         # 进行推理
         input_name = self.session.get_inputs()[0].name
         output_name = self.session.get_outputs()[0].name
-        features = self.session.run([output_name], {input_name: im_batch})[0]
+        features = []
+        batch_size = len(im_batch)
         
+        # Run the model for each sample in the batch individually
+        for i in range(batch_size):
+            single_batch = im_batch[i:i+1]  # Create a batch of size 1
+            feature = self.session.run([output_name], {input_name: single_batch})[0]
+            features.append(feature)
+        
+        # cat features
+        features = np.concatenate(features, axis=0)
+
         return features
 
 

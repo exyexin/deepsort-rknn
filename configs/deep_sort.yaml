@@ -1,6 +1,5 @@
 DEEPSORT:
-  # REID_CKPT: "./deep_sort/deep/checkpoint/ckpt.onnx"
-  REID_CKPT: "./ckpt.rknn"
+  REID_CKPT: "./ckpt.onnx"
   MAX_DIST: 0.2
   MIN_CONFIDENCE: 0.5
   NMS_MAX_OVERLAP: 0.5
