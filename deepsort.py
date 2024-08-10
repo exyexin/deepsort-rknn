@@ -129,7 +129,7 @@ def parse_args():
     parser.add_argument("--display_height", type=int, default=600)
     
     parser.add_argument("--save_path", type=str, default="./output/")
-    parser.add_argument("--cpu", dest="use_cuda", action="store_false", default=True)
+    parser.add_argument("--cpu", dest="use_cuda", action="store_true")
     return parser.parse_args()
 
 if __name__ == "__main__":

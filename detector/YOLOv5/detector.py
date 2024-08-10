@@ -21,6 +21,7 @@ from detector.YOLOv5.utils.general import (LOGGER, check_file, check_img_size, c
                            increment_path, non_max_suppression, print_args, scale_coords, strip_optimizer, xyxy2xywh)
 from detector.YOLOv5.utils.plots import Annotator, colors, save_one_box
 from detector.YOLOv5.utils.torch_utils import select_device, time_sync
+from rknnlite.api import RKNNLite as RKNN
 
 
 class YOLOv5(object):
@@ -29,6 +30,16 @@ class YOLOv5(object):
         super().__init__()
         self.device = select_device(device)
         self.net = DetectMultiBackend(weight, device=self.device, dnn=dnn, data=data)
+        # self.net = RKNN(verbose=True)
+        # ret = self.net.load_rknn(weight)
+        # if ret != 0:
+        #     print('load model failed!')
+        #     exit(1)
+
+        # ret = self.net.init_runtime(core_mask=RKNN.NPU_CORE_0)
+        # if ret != 0:
+        #     print('rknn runtime init failed!')
+        #     exit(1)
 
         self.stride, self.class_names, self.pt = self.net.stride, self.net.names, self.net.pt
         self.imgsz = check_img_size(imgsz, s=self.stride)  # check image size

@@ -292,11 +292,13 @@ class DetectMultiBackend(nn.Module):
         #   TensorFlow GraphDef:            *.pb
         #   TensorFlow Lite:                *.tflite
         #   TensorFlow Edge TPU:            *_edgetpu.tflite
+        #   rk3588                          *.rknn
         from models.experimental import attempt_download, attempt_load  # scoped to avoid circular import
 
         super().__init__()
         w = str(weights[0] if isinstance(weights, list) else weights)
-        pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs = self.model_type(w)  # get backend
+        pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, rknn = self.model_type(w)  # get backend
+        print(rknn)
         stride, names = 64, [f'class{i}' for i in range(1000)]  # assign defaults
         w = attempt_download(w)  # download if not local
         if data:  # data.yaml path (optional)
@@ -326,6 +328,20 @@ class DetectMultiBackend(nn.Module):
             import onnxruntime
             providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] if cuda else ['CPUExecutionProvider']
             session = onnxruntime.InferenceSession(w, providers=providers)
+        elif rknn:
+            LOGGER.info(f'Loading {w} for RKNN Runtime inference...')
+            from rknnlite.api import RKNNLite as RKNN
+            rknn_lite = RKNN(verbose=True)
+            ret = rknn_lite.load_rknn(w)
+            if ret != 0:
+                print('load model failed!')
+                exit(1)
+            
+            ret = rknn_lite.init_runtime(core_mask=RKNN.NPU_CORE_0)
+            if ret != 0:
+                print('rknn runtime init failed!')
+                exit(1)
+            
         elif xml:  # OpenVINO
             LOGGER.info(f'Loading {w} for OpenVINO inference...')
             check_requirements(('openvino-dev',))  # requires openvino-dev: https://pypi.org/project/openvino-dev/
@@ -468,13 +484,13 @@ class DetectMultiBackend(nn.Module):
     def model_type(p='path/to/model.pt'):
         # Return model type from model path, i.e. path='path/to/model.onnx' -> type=onnx
         from export import export_formats
-        suffixes = list(export_formats().Suffix) + ['.xml']  # export suffixes
+        suffixes = list(export_formats().Suffix) + ['.xml','.rknn']  # export suffixes
         check_suffix(p, suffixes)  # checks
         p = Path(p).name  # eliminate trailing separators
-        pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, xml2 = (s in p for s in suffixes)
+        pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, xml2, rknn = (s in p for s in suffixes)
         xml |= xml2  # *_openvino_model or *.xml
         tflite &= not edgetpu  # *.tflite
-        return pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs
+        return pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, rknn
 
 
 class AutoShape(nn.Module):

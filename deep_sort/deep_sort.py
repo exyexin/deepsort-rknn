@@ -7,6 +7,8 @@ from .sort.preprocessing import non_max_suppression
 from .sort.detection import Detection
 from .sort.tracker import Tracker
 
+from rknnlite.api import RKNNLite as RKNN
+
 __all__ = ['DeepSort']
 
 
@@ -16,10 +18,20 @@ class DeepSort(object):
         self.min_confidence = min_confidence
         self.nms_max_overlap = nms_max_overlap
 
-        if model_config is None:
-            self.extractor = Extractor(model_path, use_cuda=use_cuda)
-        else:
-            self.extractor = FastReIDExtractor(model_config, model_path, use_cuda=use_cuda)
+        # if model_config is None:
+        #     self.extractor = Extractor(model_path, use_cuda=use_cuda)
+        # else:
+        #     self.extractor = FastReIDExtractor(model_config, model_path, use_cuda=use_cuda)
+        self.extractor = RKNN(verbose=True)
+        ret = self.extractor.load_rknn(model_path)
+        if ret != 0:
+            print('load model failed!')
+            exit(1)
+
+        ret = self.extractor.init_runtime(core_mask=RKNN.NPU_CORE_1)
+        if ret != 0:
+            print('rknn runtime init failed!')
+            exit(1) 
 
         max_cosine_distance = max_dist
         metric = NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)

@@ -1,3 +1,4 @@
-python deepsort.py \
+sudo /home/user/.conda/envs/yolov7-rknn/bin/python deepsort.py \
     --VIDEO_PATH ./test.mp4 \
-    --config_detection ./configs/yolov5s.yaml
+    --config_detection ./configs/yolov5s.yaml \
+    --cpu
