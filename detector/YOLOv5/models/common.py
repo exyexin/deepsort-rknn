@@ -416,6 +416,7 @@ class DetectMultiBackend(nn.Module):
     def forward(self, im, augment=False, visualize=False, val=False):
         # YOLOv5 MultiBackend inference
         b, ch, h, w = im.shape  # batch, channel, height, width
+        # print(f'rknn: {self.rknn}')
         if self.pt or self.jit:  # PyTorch
             y = self.model(im) if self.jit else self.model(im, augment=augment, visualize=visualize)
             return y if val else y[0]
@@ -426,6 +427,9 @@ class DetectMultiBackend(nn.Module):
         elif self.onnx:  # ONNX Runtime
             im = im.cpu().numpy()  # torch to numpy
             y = self.session.run([self.session.get_outputs()[0].name], {self.session.get_inputs()[0].name: im})[0]
+        elif self.rknn:
+            # im=im.cpu().numpy()  # torch to numpy
+            y = self.rknn_lite.inference(inputs=im)
         elif self.xml:  # OpenVINO
             im = im.cpu().numpy()  # FP32
             desc = self.ie.TensorDesc(precision='FP32', dims=im.shape, layout='NCHW')  # Tensor Description

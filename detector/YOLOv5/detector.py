@@ -52,19 +52,28 @@ class YOLOv5(object):
         # read image
         bs = 1
         img = letterbox(im0, self.imgsz, stride=self.stride, auto=True)[0]
-        img = img.transpose((2, 0, 1))
-        img = np.ascontiguousarray(img)
+        if self.net.rknn:
+            img = np.expand_dims(img,axis=0)
+        else:
+            img = img.transpose((2, 0, 1))
+            img = np.ascontiguousarray(img)
 
-        # preprocess image
-        img = torch.from_numpy(img).to(self.device)
-        img = img.float()
-        img /= 255.
-        if len(img.shape) == 3:
-            img = img[None]
+            # preprocess image
+            img = torch.from_numpy(img).to(self.device)
+            img = img.float()
+            img /= 255.
+            if len(img.shape) == 3:
+                img = img[None]
 
         # model inference
         # self.net.warmup(imgsz=(1 if self.pt else bs, 3, *self.imgsz))  # warmup
+        print("inference --> ")
+        if self.net.rknn:
+            print('using RKNPU --> ')
         pred = self.net(img, augment=augment)
+        if self.net.rknn:
+            pred = np.array(pred)
+            print(f'pred type:{type(pred)}')
         pred = non_max_suppression(pred, self.conf_thres, self.nms_thres,
                                    classes=None, agnostic=False, max_det=self.max_det)[0]
 
