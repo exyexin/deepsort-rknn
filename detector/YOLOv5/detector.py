@@ -56,14 +56,16 @@ class YOLOv5(object):
             img = np.expand_dims(img, axis=0)
         else:
             img = img.transpose((2, 0, 1))
-            img = np.ascontiguousarray(img)
+
+        print(img.shape)
+        img = np.ascontiguousarray(img)
             
-            # preprocess image
-            img = torch.from_numpy(img).to(self.device)
-            img = img.float()
-            # img /= 255.
-            if len(img.shape) == 3:
-                img = img[None]
+        # preprocess image
+        img = torch.from_numpy(img).to(self.device)
+        img = img.float()
+        # img /= 255.
+        if len(img.shape) == 3:
+            img = img[None]
 
             # img = img.permute(0, 2, 3, 1)
 

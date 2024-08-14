@@ -4,6 +4,7 @@ import torchvision.transforms as transforms
 import numpy as np
 import cv2
 import logging
+import os
 
 from .model import Net
 from .resnet import resnet18
@@ -12,6 +13,8 @@ from .resnet import resnet18
 # from fastreid.utils.checkpoint import Checkpointer
 
 from rknnlite.api import RKNNLite as RKNN
+USE_RKNN = True
+print(f'==========USE_RKNN:{USE_RKNN}===========')
 
 class Extractor(object):
     def __init__(self, model_path, use_cuda=True):
@@ -40,7 +43,8 @@ class Extractor(object):
         logger = logging.getLogger("root.tracker")
         logger.info("Loading weights from {}... Done!".format(model_path))
         
-        self.size = (64, 128)
+        # self.size = (64, 128)
+        self.size = (384,640)
         self.norm = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
@@ -65,7 +69,12 @@ class Extractor(object):
         """
 
         def _resize(im, size):
-            return cv2.resize(im.astype(np.float32) / 255., size)
+            if USE_RKNN:
+                print('USE_RKNN _resize-->')
+                img = cv2.resize(im.astype(np.float32), size)
+            else:
+                img = cv2.resize(im.astype(np.float32) / 255., size)
+            return img
 
         im_batch = torch.cat([self.norm(_resize(im, self.size)).unsqueeze(0) for im in im_crops], dim=0).float()
         return im_batch
@@ -87,10 +96,9 @@ class Extractor(object):
         # Run the model for each sample in the batch individually
         for i in range(batch_size):
             single_batch = im_batch[i:i+1]  # Create a batch of size 1
-            breakpoint()
+            # breakpoint()
             # feature = self.session.run([output_name], {input_name: single_batch})[0]
-            feature = self.extractor.inference(single_batch)[0]
-            
+            feature = self.extractor.inference([single_batch])[0]
             features.append(feature)
         
         # cat features
