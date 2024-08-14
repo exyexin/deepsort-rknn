@@ -428,8 +428,8 @@ class DetectMultiBackend(nn.Module):
             im = im.cpu().numpy()  # torch to numpy
             y = self.session.run([self.session.get_outputs()[0].name], {self.session.get_inputs()[0].name: im})[0]
         elif self.rknn:
-            # im=im.cpu().numpy()  # torch to numpy
-            y = self.rknn_lite.inference(inputs=im)
+            im=im.cpu().numpy()  # torch to numpy
+            y = self.rknn_lite.inference(inputs=im)[0]
         elif self.xml:  # OpenVINO
             im = im.cpu().numpy()  # FP32
             desc = self.ie.TensorDesc(precision='FP32', dims=im.shape, layout='NCHW')  # Tensor Description

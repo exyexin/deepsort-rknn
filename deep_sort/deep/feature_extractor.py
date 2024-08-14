@@ -11,6 +11,8 @@ from .resnet import resnet18
 # from fastreid.engine import DefaultTrainer
 # from fastreid.utils.checkpoint import Checkpointer
 
+from rknnlite.api import RKNNLite as RKNN
+
 class Extractor(object):
     def __init__(self, model_path, use_cuda=True):
         self.device = "cuda" if torch.cuda.is_available() and use_cuda else "cpu"
@@ -21,8 +23,20 @@ class Extractor(object):
         # self.net.to(self.device)
 
         # 加载 ONNX 模型
-        self.session = ort.InferenceSession(model_path, providers=['CUDAExecutionProvider'] if use_cuda else ['CPUExecutionProvider'])
+        # self.session = ort.InferenceSession(model_path, providers=['CUDAExecutionProvider'] if use_cuda else ['CPUExecutionProvider'])
         
+        self.extractor = RKNN(verbose=True)
+        ret = self.extractor.load_rknn(model_path)
+        if ret != 0:
+            print('load model failed!')
+            exit(1)
+
+        ret = self.extractor.init_runtime(core_mask=RKNN.NPU_CORE_1)
+        if ret != 0:
+            print('rknn runtime init failed!')
+            exit(1) 
+
+
         logger = logging.getLogger("root.tracker")
         logger.info("Loading weights from {}... Done!".format(model_path))
         
@@ -63,9 +77,24 @@ class Extractor(object):
         #     features = self.net(im_batch)
         
         # 进行推理
-        input_name = self.session.get_inputs()[0].name
-        output_name = self.session.get_outputs()[0].name
-        features = self.session.run([output_name], {input_name: im_batch})[0]
+        # input_name = self.session.get_inputs()[0].name
+        # output_name = self.session.get_outputs()[0].name
+        # features = self.session.run([output_name], {input_name: im_batch})[0]
+        
+        features = []
+        batch_size = len(im_batch)
+        
+        # Run the model for each sample in the batch individually
+        for i in range(batch_size):
+            single_batch = im_batch[i:i+1]  # Create a batch of size 1
+            breakpoint()
+            # feature = self.session.run([output_name], {input_name: single_batch})[0]
+            feature = self.extractor.inference(single_batch)[0]
+            
+            features.append(feature)
+        
+        # cat features
+        features = np.concatenate(features, axis=0)
         
         return features
 

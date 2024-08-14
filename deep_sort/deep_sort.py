@@ -7,8 +7,6 @@ from .sort.preprocessing import non_max_suppression
 from .sort.detection import Detection
 from .sort.tracker import Tracker
 
-from rknnlite.api import RKNNLite as RKNN
-
 __all__ = ['DeepSort']
 
 
@@ -18,21 +16,12 @@ class DeepSort(object):
         self.min_confidence = min_confidence
         self.nms_max_overlap = nms_max_overlap
 
-        # if model_config is None:
-        #     self.extractor = Extractor(model_path, use_cuda=use_cuda)
-        # else:
-        #     self.extractor = FastReIDExtractor(model_config, model_path, use_cuda=use_cuda)
-        self.extractor = RKNN(verbose=True)
-        ret = self.extractor.load_rknn(model_path)
-        if ret != 0:
-            print('load model failed!')
-            exit(1)
-
-        ret = self.extractor.init_runtime(core_mask=RKNN.NPU_CORE_1)
-        if ret != 0:
-            print('rknn runtime init failed!')
-            exit(1) 
-
+        if model_config is None:
+            self.extractor = Extractor(model_path, use_cuda=use_cuda)
+        else:
+            self.extractor = FastReIDExtractor(model_config, model_path, use_cuda=use_cuda)
+        
+        
         max_cosine_distance = max_dist
         metric = NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
         self.tracker = Tracker(metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
@@ -42,9 +31,8 @@ class DeepSort(object):
         # generate detections
         features = self._get_features(bbox_xywh, ori_img)
         bbox_tlwh = self._xywh_to_tlwh(bbox_xywh)
-        detections = [Detection(bbox_tlwh[i], conf, label, features[i], None if masks is None else masks[i])
-                      for i, (conf, label) in enumerate(zip(confidences, classes))
-                      if conf > self.min_confidence]
+        breakpoint()
+        detections = [Detection(bbox_tlwh[i], conf, label, features[i], None if masks is None else masks[i]) for i, (conf, label) in enumerate(zip(confidences, classes)) if conf > self.min_confidence]
 
         # run on non-maximum supression
         boxes = np.array([d.tlwh for d in detections])
@@ -126,8 +114,12 @@ class DeepSort(object):
             x1, y1, x2, y2 = self._xywh_to_xyxy(box)
             im = ori_img[y1:y2, x1:x2]
             im_crops.append(im)
+            
         if im_crops:
-            features = self.extractor(im_crops)
+            # for im_crop in im_crops:
+                
+            # features = self.extractor.inference(np.expand_dims(im_crops[0], axis=0))
+            features = self.extractor(np.expand_dims(im_crops[0], axis=0))
         else:
             features = np.array([])
         return features

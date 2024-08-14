@@ -76,7 +76,7 @@ class VideoTracker(object):
 
             # 1. YOLO: do detection
             bbox_xywh, cls_conf, cls_ids = self.detector(im)
-
+            
             # select person class
             mask = cls_ids == 0
 
@@ -86,7 +86,7 @@ class VideoTracker(object):
             bbox_xywh[:, 2:] *= 1.2
             cls_conf = cls_conf[mask]
             cls_ids = cls_ids[mask]
-
+            
             # 2. DeepSort: do tracking
             outputs, _ = self.deepsort.update(bbox_xywh, cls_conf, cls_ids, im)
 
@@ -116,6 +116,11 @@ class VideoTracker(object):
             # logging
             self.logger.info("time: {:.03f}s, fps: {:.03f}, detection numbers: {}, tracking numbers: {}" \
                              .format(end - start, 1 / (end - start), bbox_xywh.shape[0], len(outputs)))
+
+            # TODO: early stop
+            if idx_frame > 15:
+                break
+
 
 
 def parse_args():
