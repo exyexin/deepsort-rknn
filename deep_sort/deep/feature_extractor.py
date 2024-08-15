@@ -43,8 +43,7 @@ class Extractor(object):
         logger = logging.getLogger("root.tracker")
         logger.info("Loading weights from {}... Done!".format(model_path))
         
-        # self.size = (64, 128)
-        self.size = (384,640)
+        self.size = (64, 128)
         self.norm = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
@@ -96,10 +95,10 @@ class Extractor(object):
         # Run the model for each sample in the batch individually
         for i in range(batch_size):
             single_batch = im_batch[i:i+1]  # Create a batch of size 1
-            # breakpoint()
             # feature = self.session.run([output_name], {input_name: single_batch})[0]
             feature = self.extractor.inference([single_batch])[0]
             features.append(feature)
+            breakpoint()
         
         # cat features
         features = np.concatenate(features, axis=0)
