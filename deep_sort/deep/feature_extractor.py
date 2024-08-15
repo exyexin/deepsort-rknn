@@ -70,7 +70,7 @@ class Extractor(object):
         def _resize(im, size):
             if USE_RKNN:
                 print('USE_RKNN _resize-->')
-                img = cv2.resize(im.astype(np.float32) / 255, size)
+                img = cv2.resize(im.astype(np.float32) / 255., size)
             else:
                 img = cv2.resize(im.astype(np.float32) / 255., size)
             return img
