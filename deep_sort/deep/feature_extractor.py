@@ -70,7 +70,7 @@ class Extractor(object):
         def _resize(im, size):
             if USE_RKNN:
                 print('USE_RKNN _resize-->')
-                img = cv2.resize(im.astype(np.float32), size)
+                img = cv2.resize(im.astype(np.float32) / 255, size)
             else:
                 img = cv2.resize(im.astype(np.float32) / 255., size)
             return img
@@ -95,11 +95,9 @@ class Extractor(object):
         # Run the model for each sample in the batch individually
         for i in range(batch_size):
             single_batch = im_batch[i:i+1]  # Create a batch of size 1
-            # feature = self.session.run([output_name], {input_name: single_batch})[0]
             feature = self.extractor.inference([single_batch])[0]
-            features.append(feature)
             breakpoint()
-        
+            features.append(feature)
         # cat features
         features = np.concatenate(features, axis=0)
         
