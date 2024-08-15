@@ -21,7 +21,6 @@ class DeepSort(object):
         else:
             self.extractor = FastReIDExtractor(model_config, model_path, use_cuda=use_cuda)
         
-        
         max_cosine_distance = max_dist
         metric = NearestNeighborDistanceMetric("cosine", max_cosine_distance, nn_budget)
         self.tracker = Tracker(metric, max_iou_distance=max_iou_distance, max_age=max_age, n_init=n_init)
@@ -31,7 +30,6 @@ class DeepSort(object):
         # generate detections
         features = self._get_features(bbox_xywh, ori_img)
         bbox_tlwh = self._xywh_to_tlwh(bbox_xywh)
-        breakpoint()
         detections = [Detection(bbox_tlwh[i], conf, label, features[i], None if masks is None else masks[i]) for i, (conf, label) in enumerate(zip(confidences, classes)) if conf > self.min_confidence]
 
         # run on non-maximum supression
@@ -114,10 +112,8 @@ class DeepSort(object):
             x1, y1, x2, y2 = self._xywh_to_xyxy(box)
             im = ori_img[y1:y2, x1:x2]
             im_crops.append(im)
-        
         if im_crops:
             features = self.extractor(im_crops)
-            breakpoint()
         else:
             features = np.array([])
         return features

@@ -76,7 +76,7 @@ class VideoTracker(object):
 
             # 1. YOLO: do detection
             bbox_xywh, cls_conf, cls_ids = self.detector(im)
-
+            
             # select person class
             mask = cls_ids == 0
 

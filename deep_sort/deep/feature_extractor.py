@@ -27,14 +27,13 @@ class Extractor(object):
 
         # 加载 ONNX 模型
         # self.session = ort.InferenceSession(model_path, providers=['CUDAExecutionProvider'] if use_cuda else ['CPUExecutionProvider'])
-        
         self.extractor = RKNN(verbose=True)
         ret = self.extractor.load_rknn(model_path)
         if ret != 0:
             print('load model failed!')
             exit(1)
 
-        ret = self.extractor.init_runtime(core_mask=RKNN.NPU_CORE_1)
+        ret = self.extractor.init_runtime(core_mask=RKNN.NPU_CORE_0)
         if ret != 0:
             print('rknn runtime init failed!')
             exit(1) 
@@ -68,12 +67,12 @@ class Extractor(object):
         """
 
         def _resize(im, size):
-            if USE_RKNN:
-                print('USE_RKNN _resize-->')
-                img = cv2.resize(im.astype(np.float32) / 255., size)
-            else:
-                img = cv2.resize(im.astype(np.float32) / 255., size)
-            return img
+            # if USE_RKNN:
+            #     print('USE_RKNN _resize-->')
+            #     img = cv2.resize(im.astype(np.float32) / 255., size)
+            # else:
+            #     img = cv2.resize(im.astype(np.float32) / 255., size)
+            return cv2.resize(im.astype(np.float32) / 255., size)
 
         im_batch = torch.cat([self.norm(_resize(im, self.size)).unsqueeze(0) for im in im_crops], dim=0).float()
         return im_batch
@@ -95,8 +94,7 @@ class Extractor(object):
         # Run the model for each sample in the batch individually
         for i in range(batch_size):
             single_batch = im_batch[i:i+1]  # Create a batch of size 1
-            feature = self.extractor.inference([single_batch])[0]
-            breakpoint()
+            feature = self.extractor.inference(inputs=[single_batch])[0]
             features.append(feature)
         # cat features
         features = np.concatenate(features, axis=0)

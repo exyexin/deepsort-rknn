@@ -63,7 +63,7 @@ class YOLOv5(object):
         # preprocess image
         img = torch.from_numpy(img).to(self.device)
         img = img.float()
-        # img /= 255.
+        img /= 255.
         if len(img.shape) == 3:
             img = img[None]
 
